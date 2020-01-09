@@ -53,6 +53,8 @@ struct counter_s {
     int score;
     int end;
     int win;
+    int pause;
+    int loose;
     float speed;
 };
 
@@ -111,13 +113,18 @@ sfRenderWindow *set_win(char *title, int fps, int fullscreen);
 all_t initialization(all_t all);
 void initialization_pos(all_t all);
 all_t initialization_tex(all_t all);
+all_t initialization_tex2(all_t all);
 all_t initialization_counter(all_t all);
 all_t initialization_text(all_t all);
 all_t initialization_rect(all_t all);
+all_t initialization_clock(all_t all);
+void initialization_pos_text(all_t all);
 void display_title(all_t all);
 void display_settings(all_t all);
 void display_play(all_t all);
 void display_win(all_t all);
+void display_loose(all_t all);
+void display_pause(all_t all);
 void set_pos(sfSprite *sprite, int x, int y);
 void parallax_reset(all_t all);
 all_t parallax(all_t all);
@@ -133,14 +140,18 @@ all_t set_fps(all_t all);
 all_t set_window(all_t all);
 all_t play(all_t all);
 all_t animation(all_t all);
+all_t animation2(all_t all);
 all_t jump(all_t all);
+all_t jump2(all_t all);
 all_t gravity(all_t all);
 char **array_to_tab_array(char *map_str);
 all_t read_map(all_t all, char **av);
 all_t print_map(all_t all);
+all_t print_map2(all_t all);
 void display_obj(all_t all);
 all_t move_obj(all_t all);
 all_t hit_box(all_t all);
+all_t hit_box2(all_t all);
 all_t score(all_t all);
 all_t end(all_t all);
 all_t win(all_t all);
@@ -150,6 +161,7 @@ char *write_high_score(char *buffer, all_t all);
 char *read_high_score(all_t all);
 all_t highscore(all_t all);
 all_t button_end(all_t all);
+all_t pause_game(all_t all);
 
 void main(int ac, char **av)
 {
@@ -182,18 +194,47 @@ all_t play(all_t all)
         all = score(all);
         all = end(all);
         all = analyse_event(all);
+        all = pause_game(all);
         display_play(all);
     }
     if (all.cn.win == 1)
         all = win(all);
-    else
+    else if (all.cn.loose == 1)
         all = loose(all);
+    return (all);
+}
+
+all_t pause_game(all_t all)
+{
+    if (sfKeyboard_isKeyPressed(sfKeyEscape) == sfTrue) {
+        all.cn.pause = 1;
+        set_pos(all.tex.menu, 120, 450);
+        sfRenderWindow_setMouseCursorVisible(all.window, sfTrue);
+        while (all.cn.pause == 1) {
+            display_pause(all);
+            all = button_end(all);
+        }
+        if (all.cn.play == 1)
+            sfRenderWindow_setMouseCursorVisible(all.window, sfFalse);
+    }
     return (all);
 }
 
 all_t loose(all_t all)
 {
-    
+    set_pos(all.tex.menu, 50, 890);
+    set_pos(all.tex.quit, 1520, 890);
+    set_pos(all.tex.play, 650, 860);
+    set_pos_text(all.tx.score, 860, 360);
+    all.cn.speed = -1;
+    all = highscore(all);
+    sfRenderWindow_setMouseCursorVisible(all.window, sfTrue);
+    while (all.cn.end == 1) {
+        all = parallax(all);
+        all = button_end(all);
+        display_loose(all);
+    }
+    return (all);
 }
 
 all_t win(all_t all)
@@ -221,14 +262,18 @@ all_t button_end(all_t all)
         initialization_pos(all);
         all.cn.title = 1;
         all.cn.end = 0;
+        all.cn.pause = 0;
     }
     if (check_click(all.tex.play, 600, 150, all) == 1) {
-        all = initialization_counter(all);
-        all = initialization_rect(all);
-        initialization_pos(all);
+        if (all.cn.pause != 1) {
+            all = initialization_counter(all);
+            all = initialization_rect(all);
+            initialization_pos(all);
+        }
         all.cn.play = 1;
         all.cn.title = 0;
         all.cn.end = 0;
+        all.cn.pause = 0;
     }
     all = analyse_event(all);
     return (all);
@@ -272,13 +317,13 @@ all_t end_background(all_t all)
         all.move.x = 1;
     if (sfSprite_getPosition(all.tex.background).x >= 0)
         all.move.x = -1;
-    if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.background)) > 10) {
+    if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.background)) > \
+        10) {
         sfClock_restart(all.cl.background);
         sfSprite_move(all.tex.background, all.move);
     }
     return (all);
 }
-        
 
 all_t score(all_t all)
 {
@@ -299,7 +344,8 @@ all_t end(all_t all)
         set_pos(all.tex.jump, 2000, 2000);
         sfSprite_setTextureRect(all.tex.tp, all.re.tp);
         while (all.re.tp.left <= 4875) {
-            if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.tp)) > 60) {
+            if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.tp)) > \
+                60) {
                 sfSprite_setTextureRect(all.tex.tp, all.re.tp);
                 all.re.tp.left += 192;
                 sfClock_restart(all.cl.tp);
@@ -312,13 +358,13 @@ all_t end(all_t all)
         all.cn.win = 1;
     }
     return (all);
-}               
+}
 
 all_t read_map(all_t all, char **av)
 {
     char *buf = malloc(sizeof(char) * 10000);
     int fd = open(av[1], O_RDWR);
-    
+
     read(fd, buf, 10000);
     all.map = buf;
     all.map_name = av[1];
@@ -338,10 +384,18 @@ all_t hit_box(all_t all)
               sfSprite_getPosition(all.tex.run).x == 500))) {
             all.cn.play = 0;
             all.cn.end = 1;
+            all.cn.loose = 1;
         }
         i++;
     }
-    i = 0;
+    all = hit_box2(all);
+    return (all);
+}
+
+all_t hit_box2(all_t all)
+{
+    int i = 0;
+
     while (i != all.cn.wall) {
         if (sfSprite_getPosition(all.tex.wall[i]).x < 600 &&    \
             sfSprite_getPosition(all.tex.wall[i]).x > 180 &&    \
@@ -351,6 +405,7 @@ all_t hit_box(all_t all)
               sfSprite_getPosition(all.tex.run).x == 500))) {
             all.cn.play = 0;
             all.cn.end = 1;
+            all.cn.loose = 1;
         }
         i++;
     }
@@ -364,22 +419,25 @@ all_t hit_box(all_t all)
               sfSprite_getPosition(all.tex.run).x == 500))) {
             all.cn.play = 0;
             all.cn.end = 1;
+            all.cn.loose = 1;
         }
         i++;
     }
     return (all);
 }
-             
+
 all_t print_map(all_t all)
 {
     if ((all.cn.pix / all.cn.map) >= 20) {
         if (all.map[all.cn.map] == 'S') {
-            all.tex.spike[all.cn.spike] = create_sprite(all.tex.spike[all.cn.spike], "files/spike1.png");
+            all.tex.spike[all.cn.spike] =                               \
+                create_sprite(all.tex.spike[all.cn.spike], "files/spike.png");
             set_pos(all.tex.spike[all.cn.spike], 1920, 920);
             all.cn.spike++;
         }
         if (all.map[all.cn.map] == 'V') {
-            all.tex.hole[all.cn.hole] = create_sprite(all.tex.hole[all.cn.hole], "files/black_hole.png");
+            all.tex.hole[all.cn.hole] =                                 \
+                create_sprite(all.tex.hole[all.cn.hole], "files/hole.png");
             all.re.hole[all.cn.hole].top = 0;
             all.re.hole[all.cn.hole].left = -189;
             all.re.hole[all.cn.hole].width = 189;
@@ -387,20 +445,27 @@ all_t print_map(all_t all)
             set_pos(all.tex.hole[all.cn.hole], 1920, 400);
             all.cn.hole++;
         }
-        if (all.map[all.cn.map] == 'W') {
-            all.tex.wall[all.cn.wall] = create_sprite(all.tex.wall[all.cn.wall], "files/wallfire.png");
-            all.re.wall[all.cn.wall].top = 0;
-            all.re.wall[all.cn.wall].left = -380;
-            all.re.wall[all.cn.wall].width = 380;
-            all.re.wall[all.cn.wall].height = 120;
-            set_pos(all.tex.wall[all.cn.wall], 1920, 900);
-            all.cn.wall++;
-        }
+        all = print_map2(all);
         all.cn.map++;
     }
     return (all);
 }
 
+all_t print_map2(all_t all)
+{
+    if (all.map[all.cn.map] == 'W') {
+        all.tex.wall[all.cn.wall] =                                     \
+            create_sprite(all.tex.wall[all.cn.wall], "files/wall.png");
+        all.re.wall[all.cn.wall].top = 0;
+        all.re.wall[all.cn.wall].left = -380;
+        all.re.wall[all.cn.wall].width = 380;
+        all.re.wall[all.cn.wall].height = 120;
+        set_pos(all.tex.wall[all.cn.wall], 1920, 900);
+        all.cn.wall++;
+    }
+    return (all);
+}
+    
 all_t jump(all_t all)
 {
     sfVector2f pos = sfSprite_getPosition(all.tex.jump);
@@ -419,9 +484,18 @@ all_t jump(all_t all)
             all.cn.jump++;
         }
     }
+    all = jump2(all);
+    return (all);
+}
+
+all_t jump2(all_t all)
+{
+    sfVector2f pos = sfSprite_getPosition(all.tex.jump);
+    
     if (all.cn.jump >= 1) {
         set_pos(all.tex.run, 2000, 2000);
-        if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.jump)) > 150) {
+        if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.jump))  \
+            > 150) {
             all.re.jump.left = all.re.jump.left + 125;
             sfSprite_setTextureRect(all.tex.jump, all.re.jump);
             sfClock_restart(all.cl.jump);
@@ -440,17 +514,17 @@ all_t gravity(all_t all)
 {
     sfVector2f move = {0, 14};
     sfVector2f move_up = {0, -35};
-
+    
     if (all.cn.jump >= 1 && all.re.jump.left < 500 &&                   \
         sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.gravity)) > 20) {
         sfSprite_move(all.tex.jump, move_up);
     }
-    if (sfSprite_getPosition(all.tex.jump).y < 900 &&             \
+    if (sfSprite_getPosition(all.tex.jump).y < 900 &&                   \
         sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.gravity)) > 20) {
         sfSprite_move(all.tex.jump, move);
         sfClock_restart(all.cl.gravity);
     }
-    if (sfSprite_getPosition(all.tex.run).y < 900 &&             \
+    if (sfSprite_getPosition(all.tex.run).y < 900 &&                    \
         sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.gravity)) > 20) {
         sfSprite_move(all.tex.run, move);
         sfClock_restart(all.cl.gravity);
@@ -460,8 +534,6 @@ all_t gravity(all_t all)
 
 all_t animation(all_t all)
 {
-    int i = 0;
-    
     if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.run)) > 100) {
         all.re.run.left = all.re.run.left + 138;
         sfSprite_setTextureRect(all.tex.run, all.re.run);
@@ -470,23 +542,31 @@ all_t animation(all_t all)
     if (all.re.run.left >= 690)
         all.re.run.left = -138;
     if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.obj)) > 100) {
-        while (i != all.cn.hole) {
-            all.re.hole[i].left = all.re.hole[i].left + 189;
-            sfSprite_setTextureRect(all.tex.hole[i], all.re.hole[i]);
-            if (all.re.hole[i].left >= 378)
-                all.re.hole[i].left = 0;
-            i++;
-        }
-        i = 0;
-        while (i != all.cn.wall) {
-            all.re.wall[i].left = all.re.wall[i].left + 380;
-            sfSprite_setTextureRect(all.tex.wall[i], all.re.wall[i]);
-            if (all.re.wall[i].left >= 1140)
-                all.re.wall[i].left = 0;
-            i++;
-        }
-        sfClock_restart(all.cl.obj);
+        all = animation2(all);
     }
+    return (all);
+}
+
+all_t animation2(all_t all)
+{
+    int i = 0;
+    
+    while (i != all.cn.hole) {
+        all.re.hole[i].left = all.re.hole[i].left + 189;
+        sfSprite_setTextureRect(all.tex.hole[i], all.re.hole[i]);
+        if (all.re.hole[i].left >= 378)
+            all.re.hole[i].left = 0;
+        i++;
+    }
+    i = 0;
+    while (i != all.cn.wall) {
+        all.re.wall[i].left = all.re.wall[i].left + 380;
+        sfSprite_setTextureRect(all.tex.wall[i], all.re.wall[i]);
+        if (all.re.wall[i].left >= 1140)
+            all.re.wall[i].left = 0;
+        i++;
+    }
+    sfClock_restart(all.cl.obj);
     return (all);
 }
 
@@ -528,15 +608,15 @@ all_t set_fps(all_t all)
 
 all_t set_window(all_t all)
 {
-    if (check_click(all.tex.fullscreen, 610, 100, all) == 1 && \
+    if (check_click(all.tex.fullscreen, 610, 100, all) == 1 &&  \
         all.cn.window != 1) {
         set_pos(all.tex.arrow, 10, 160);
         sfRenderWindow_destroy(all.window);
         all.window = set_win("My Runner", all.cn.fps, 1);
         all.cn.window = 1;
     }
-    else if (check_click(all.tex.windowed, 610, 100, all) == 1 &&      \
-        all.cn.window != 0) {
+    else if (check_click(all.tex.windowed, 610, 100, all) == 1 &&       \
+             all.cn.window != 0) {
         set_pos(all.tex.arrow, 10, 270);
         sfRenderWindow_destroy(all.window);
         all.window = set_win("My Runner", all.cn.fps, 0);
@@ -581,6 +661,7 @@ all_t close_window(all_t all)
         all.cn.settings = 0;
         all.cn.win = 0;
         all.cn.end = 0;
+        all.cn.pause = 0;
     }
     if (check_click(all.tex.quit, 340, 110, all) == 1 && all.cn.play != 1) {
         sfRenderWindow_close(all.window);
@@ -589,6 +670,7 @@ all_t close_window(all_t all)
         all.cn.settings = 0;
         all.cn.win = 0;
         all.cn.end = 0;
+        all.cn.pause = 0;
     }
     return (all);
 }
@@ -596,19 +678,14 @@ all_t close_window(all_t all)
 all_t initialization(all_t all)
 {
     all.window = set_win("My Runner", 60, 1);
-    all.cl.front = sfClock_create();
-    all.cl.midle = sfClock_create();
-    all.cl.far = sfClock_create();
-    all.cl.run = sfClock_create();
-    all.cl.jump = sfClock_create();
-    all.cl.gravity = sfClock_create();
-    all.cl.obj = sfClock_create();
-    all.cl.score = sfClock_create();
+    all = initialization_clock(all);
     all = initialization_tex(all);
+    all = initialization_tex2(all);
     all = initialization_counter(all);
     all = initialization_text(all);
     all = initialization_rect(all);
     initialization_pos(all);
+    initialization_pos_text(all);
     all.tex.spike = malloc(sizeof(sfSprite *) * 1000);
     all.tex.hole = malloc(sizeof(sfSprite *) * 1000);
     all.tex.wall = malloc(sizeof(sfSprite *) * 1000);
@@ -619,12 +696,25 @@ all_t initialization(all_t all)
     return (all);
 }
 
+all_t initialization_clock(all_t all)
+{
+    all.cl.front = sfClock_create();
+    all.cl.midle = sfClock_create();
+    all.cl.far = sfClock_create();
+    all.cl.run = sfClock_create();
+    all.cl.jump = sfClock_create();
+    all.cl.gravity = sfClock_create();
+    all.cl.obj = sfClock_create();
+    all.cl.score = sfClock_create();
+    return (all);
+}
+
 all_t parallax(all_t all)
 {
     sfVector2f move_front = {all.cn.speed, 0};
     sfVector2f move_midle = {all.cn.speed / 4, 0};
     sfVector2f move_far = {all.cn.speed / 7, 0};
-    
+
     parallax_reset(all);
     if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.front)) > 10) {
         sfSprite_move(all.tex.front, move_front);
@@ -641,7 +731,7 @@ all_t move_obj(all_t all)
 {
     sfVector2f move = {all.cn.speed, 0};
     int i = 0;
-    
+
     while (i != all.cn.spike) {
         sfSprite_move(all.tex.spike[i], move);
         i++;
@@ -682,9 +772,6 @@ void initialization_pos(all_t all)
     set_pos(all.tex.fps120, 120, 640);
     set_pos(all.tex.fps144, 120, 760);
     set_pos(all.tex.menu, 90, 890);
-    set_pos_text(all.tx.graphics, 80, 20);
-    set_pos_text(all.tx.fps, 80, 390);
-    set_pos_text(all.tx.score, 1630, 5);
     set_pos(all.tex.arrow2, 10, 530);
     set_pos(all.tex.arrow, 10, 160);
     set_pos(all.tex.run, 500, 900);
@@ -694,6 +781,13 @@ void initialization_pos(all_t all)
     set_pos(all.tex.background, 0, 0);
     set_pos(all.tex.hud_win, 630, 0);
     set_pos(all.tex.hud_loose, 630, 0);
+}
+
+void initialization_pos_text(all_t all)
+{
+    set_pos_text(all.tx.graphics, 80, 20);
+    set_pos_text(all.tx.fps, 80, 390);
+    set_pos_text(all.tx.score, 1630, 5);
     set_pos_text(all.tx.win, 735, 5);
     set_pos_text(all.tx.loose, 735, 5);
     set_pos_text(all.tx.hs_text, 765, 560);
@@ -718,13 +812,18 @@ all_t initialization_tex(all_t all)
     all.tex.menu = create_sprite(all.tex.menu, "files/menu.png");
     all.tex.arrow = create_sprite(all.tex.arrow, "files/arrow.png");
     all.tex.arrow2 = create_sprite(all.tex.arrow2, "files/arrow.png");
+    return (all);
+}
+
+all_t initialization_tex2(all_t all)
+{
     all.tex.run = create_sprite(all.tex.run, "files/run.png");
     all.tex.jump = create_sprite(all.tex.jump, "files/jump.png");
     all.tex.hud = create_sprite(all.tex.hud, "files/cadre_score.png");
     all.tex.tp = create_sprite(all.tex.tp, "files/tp.png");
-    all.tex.background = create_sprite(all.tex.background, "files/background.jpg");
-    all.tex.hud_win = create_sprite(all.tex.hud_win, "files/hud_win.png");
-    all.tex.hud_loose = create_sprite(all.tex.hud_loose, "files/hud_loose.png");
+    all.tex.background = create_sprite(all.tex.background, "files/back.jpg");
+    all.tex.hud_win = create_sprite(all.tex.hud_win, "files/win.png");
+    all.tex.hud_loose = create_sprite(all.tex.hud_loose, "files/loose.png");
     return (all);
 }
 
@@ -750,8 +849,10 @@ all_t initialization_text(all_t all)
     all.tx.graphics = create_text(all.tx.graphics, 80, "Graphics settings :");
     all.tx.fps = create_text(all.tx.fps, 80, "FPS :");
     all.tx.score = create_text(all.tx.score, 80, "0");
-    all.tx.win = create_text(all.tx.win, 80, "Game Over\n  You Win\n\nYour Score:");
-    all.tx.loose = create_text(all.tx.loose, 80, "Game Over\n  You Loose\n\nYour Score:");
+    all.tx.win = create_text(all.tx.win, 80,                            \
+                             "Game Over\n  You Win\n\nYour Score:");
+    all.tx.loose = create_text(all.tx.loose, 80,                        \
+                               "Game Over\n You Loose\n\nYour Score:");
     all.tx.hs = create_text(all.tx.hs, 80, "0");
     all.tx.hs_text = create_text(all.tx.hs_text, 80, "Highscore:");
     return (all);
@@ -773,13 +874,46 @@ all_t initialization_counter(all_t all)
     all.cn.score = 0;
     all.cn.end = 0;
     all.cn.win = 0;
+    all.cn.pause = 0;
+    all.cn.loose = 0;
     return (all);
+}
+
+void display_pause(all_t all)
+{
+    sfRenderWindow_clear(all.window, sfBlack);
+    sfRenderWindow_drawSprite(all.window, all.tex.far, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.midle, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.front, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.cadre, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.quit, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.play, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.menu, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.run, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.jump, NULL);
+    sfRenderWindow_display(all.window);
+}
+
+void display_loose(all_t all)
+{
+    sfRenderWindow_clear(all.window, sfBlack);
+    sfRenderWindow_drawSprite(all.window, all.tex.far, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.midle, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.front, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.hud_loose, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.play, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.menu, NULL);
+    sfRenderWindow_drawSprite(all.window, all.tex.quit, NULL);
+    sfRenderWindow_drawText(all.window, all.tx.loose, NULL);
+    sfRenderWindow_drawText(all.window, all.tx.score, NULL);
+    sfRenderWindow_drawText(all.window, all.tx.hs, NULL);
+    sfRenderWindow_drawText(all.window, all.tx.hs_text, NULL);
+    sfRenderWindow_display(all.window);
 }
 
 void display_win(all_t all)
 {
     sfRenderWindow_clear(all.window, sfBlack);
-
     sfRenderWindow_drawSprite(all.window, all.tex.background, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.hud_win, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.play, NULL);
@@ -789,14 +923,12 @@ void display_win(all_t all)
     sfRenderWindow_drawText(all.window, all.tx.score, NULL);
     sfRenderWindow_drawText(all.window, all.tx.hs, NULL);
     sfRenderWindow_drawText(all.window, all.tx.hs_text, NULL);
-    
     sfRenderWindow_display(all.window);
 }
 
 void display_play(all_t all)
 {
     sfRenderWindow_clear(all.window, sfBlack);
-
     sfRenderWindow_drawSprite(all.window, all.tex.far, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.midle, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.front, NULL);
@@ -806,7 +938,6 @@ void display_play(all_t all)
     sfRenderWindow_drawSprite(all.window, all.tex.run, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.jump, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.tp, NULL);
-
     sfRenderWindow_display(all.window);
 }
 
@@ -833,7 +964,6 @@ void display_obj(all_t all)
 void display_title(all_t all)
 {
     sfRenderWindow_clear(all.window, sfBlack);
-
     sfRenderWindow_drawSprite(all.window, all.tex.far, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.midle, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.front, NULL);
@@ -842,14 +972,12 @@ void display_title(all_t all)
     sfRenderWindow_drawSprite(all.window, all.tex.settings, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.quit, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.my_runner, NULL);
-
     sfRenderWindow_display(all.window);
 }
 
 void display_settings(all_t all)
 {
     sfRenderWindow_clear(all.window, sfBlack);
-
     sfRenderWindow_drawSprite(all.window, all.tex.far, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.midle, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.front, NULL);
@@ -865,7 +993,6 @@ void display_settings(all_t all)
     sfRenderWindow_drawText(all.window, all.tx.fps, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.arrow, NULL);
     sfRenderWindow_drawSprite(all.window, all.tex.arrow2, NULL);
-
     sfRenderWindow_display(all.window);
 }
 
