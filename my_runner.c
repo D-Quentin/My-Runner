@@ -7,7 +7,7 @@
 
 #include "my.h"
 
-typedef	struct texture_s texture_t;
+typedef struct texture_s texture_t;
 struct texture_s {
     sfSprite *cadre;
     sfSprite *play;
@@ -92,6 +92,15 @@ struct clocks_s {
     sfClock *background;
 };
 
+typedef struct music_s music_t;
+struct music_s {
+    sfMusic *title;
+    sfMusic *play;
+    sfMusic *win;
+    sfMusic *tp;
+    sfMusic *jump;
+};
+
 typedef struct all_s all_t;
 struct all_s {
     sfRenderWindow *window;
@@ -106,6 +115,7 @@ struct all_s {
     counter_t cn;
     text_t tx;
     rect_t re;
+    music_t mu;
 };
 
 sfSprite *create_sprite(sfSprite *sprite, char *file);
@@ -118,6 +128,7 @@ all_t initialization_counter(all_t all);
 all_t initialization_text(all_t all);
 all_t initialization_rect(all_t all);
 all_t initialization_clock(all_t all);
+all_t initialization_music(all_t all);
 void initialization_pos_text(all_t all);
 void display_title(all_t all);
 void display_settings(all_t all);
@@ -162,11 +173,15 @@ char *read_high_score(all_t all);
 all_t highscore(all_t all);
 all_t button_end(all_t all);
 all_t pause_game(all_t all);
+int syntax(int ac, char **av);
+void destroy(all_t all);
+void destroy_music(all_t all);
 
-void main(int ac, char **av)
+int main(int ac, char **av)
 {
     all_t all;
-
+    if (syntax(ac, av) == 1)
+        return (84);
     all = initialization(all);
     all = read_map(all, av);
     while (sfRenderWindow_isOpen(all.window)) {
@@ -180,10 +195,51 @@ void main(int ac, char **av)
             all = play(all);
         }
     }
+    destroy(all);
+    return (0);
+}
+
+void destroy(all_t all)
+{
+    destroy_music(all);
+}
+
+void destroy_music(all_t all)
+{
+    sfMusic_stop(all.mu.play);
+    sfMusic_stop(all.mu.title);
+    sfMusic_stop(all.mu.tp);
+    sfMusic_stop(all.mu.win);
+    sfMusic_stop(all.mu.jump);
+    sfMusic_destroy(all.mu.play);
+    sfMusic_destroy(all.mu.title);
+    sfMusic_destroy(all.mu.tp);
+    sfMusic_destroy(all.mu.win);
+    sfMusic_destroy(all.mu.jump);
+}
+
+int syntax(int ac, char **av)
+{
+    if (ac == 1) {
+        my_putstr("Please add a map, make [./my_runner -h] for more info\n");
+        return (1);
+    }
+    if (av[1][0] == '-' && av[1][1] == 'h') {
+        my_putstr("Welcome in my runner.\n\n");
+        my_putstr("USAGE\n\t./my_runner [map]\n\t");
+        my_putstr("Choose one of these map:\n\t");
+        my_putstr("map1.txt\n\tmap2.txt\n\tmap3.txt\n\n");
+        my_putstr("OPTION\n\t-h\tprint the usage and quit.\n\n");
+        my_putstr("USER INTERACTIONS\n\t");
+        my_putstr("SPACE_KEY\tjump (You have a double jump).\n\t");
+        my_putstr("ESCAPE_KEY\tpause.\n\nGLHF\n");
+        return (1);
+    }
 }
 
 all_t play(all_t all)
 {
+    sfMusic_play(all.mu.play);
     while (all.cn.play == 1) {
         all = parallax(all);
         all = animation(all);
@@ -197,6 +253,7 @@ all_t play(all_t all)
         all = pause_game(all);
         display_play(all);
     }
+    sfMusic_stop(all.mu.play);
     if (all.cn.win == 1)
         all = win(all);
     else if (all.cn.loose == 1)
@@ -210,12 +267,15 @@ all_t pause_game(all_t all)
         all.cn.pause = 1;
         set_pos(all.tex.menu, 120, 450);
         sfRenderWindow_setMouseCursorVisible(all.window, sfTrue);
+        sfMusic_pause(all.mu.play);
         while (all.cn.pause == 1) {
             display_pause(all);
             all = button_end(all);
         }
-        if (all.cn.play == 1)
+        if (all.cn.play == 1) {
             sfRenderWindow_setMouseCursorVisible(all.window, sfFalse);
+            sfMusic_play(all.mu.play);
+        }
     }
     return (all);
 }
@@ -228,12 +288,15 @@ all_t loose(all_t all)
     set_pos_text(all.tx.score, 860, 360);
     all.cn.speed = -1;
     all = highscore(all);
+    sfMusic_play(all.mu.title);
     sfRenderWindow_setMouseCursorVisible(all.window, sfTrue);
     while (all.cn.end == 1) {
         all = parallax(all);
         all = button_end(all);
         display_loose(all);
     }
+    if (all.cn.play == 1)
+        sfMusic_stop(all.mu.title);
     return (all);
 }
 
@@ -245,12 +308,14 @@ all_t win(all_t all)
     set_pos(all.tex.play, 650, 860);
     set_pos_text(all.tx.score, 860, 360);
     all = highscore(all);
+    sfMusic_play(all.mu.win);
     sfRenderWindow_setMouseCursorVisible(all.window, sfTrue);
     while (all.cn.end == 1) {
         all = end_background(all);
         all = button_end(all);
         display_win(all);
     }
+    sfMusic_stop(all.mu.win);
     return (all);
 }
 
@@ -342,7 +407,7 @@ all_t end(all_t all)
         set_pos(all.tex.tp, 500, 800);
         set_pos(all.tex.run, 2000, 2000);
         set_pos(all.tex.jump, 2000, 2000);
-        sfSprite_setTextureRect(all.tex.tp, all.re.tp);
+        sfMusic_play(all.mu.tp);
         while (all.re.tp.left <= 4875) {
             if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.tp)) > \
                 60) {
@@ -465,7 +530,7 @@ all_t print_map2(all_t all)
     }
     return (all);
 }
-    
+
 all_t jump(all_t all)
 {
     sfVector2f pos = sfSprite_getPosition(all.tex.jump);
@@ -473,6 +538,8 @@ all_t jump(all_t all)
     if (sfSprite_getPosition(all.tex.run).y < 900 && all.cn.jump == 0)
         return (all);
     if (sfKeyboard_isKeyPressed(sfKeySpace) == sfTrue && all.cn.jump <= 2) {
+        sfMusic_stop(all.mu.jump);
+        sfMusic_play(all.mu.jump);
         if (all.cn.jump == 1 && all.re.jump.left > 300)
             all.cn.jump++;
         if (all.cn.jump == 0) {
@@ -491,7 +558,7 @@ all_t jump(all_t all)
 all_t jump2(all_t all)
 {
     sfVector2f pos = sfSprite_getPosition(all.tex.jump);
-    
+
     if (all.cn.jump >= 1) {
         set_pos(all.tex.run, 2000, 2000);
         if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.jump))  \
@@ -514,7 +581,7 @@ all_t gravity(all_t all)
 {
     sfVector2f move = {0, 14};
     sfVector2f move_up = {0, -35};
-    
+
     if (all.cn.jump >= 1 && all.re.jump.left < 500 &&                   \
         sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.gravity)) > 20) {
         sfSprite_move(all.tex.jump, move_up);
@@ -550,7 +617,7 @@ all_t animation(all_t all)
 all_t animation2(all_t all)
 {
     int i = 0;
-    
+
     while (i != all.cn.hole) {
         all.re.hole[i].left = all.re.hole[i].left + 189;
         sfSprite_setTextureRect(all.tex.hole[i], all.re.hole[i]);
@@ -627,6 +694,8 @@ all_t set_window(all_t all)
 
 all_t title(all_t all)
 {
+    if (sfMusic_getStatus(all.mu.title) == sfStopped)
+        sfMusic_play(all.mu.title);
     while (all.cn.title == 1) {
         parallax(all);
         display_title(all);
@@ -639,6 +708,7 @@ all_t title(all_t all)
             sfRenderWindow_setMouseCursorVisible(all.window, sfFalse);
             all.cn.play = 1;
             all.cn.title = 0;
+            sfMusic_stop(all.mu.title);
         }
     }
     return (all);
@@ -684,8 +754,8 @@ all_t initialization(all_t all)
     all = initialization_counter(all);
     all = initialization_text(all);
     all = initialization_rect(all);
+    all = initialization_music(all);
     initialization_pos(all);
-    initialization_pos_text(all);
     all.tex.spike = malloc(sizeof(sfSprite *) * 1000);
     all.tex.hole = malloc(sizeof(sfSprite *) * 1000);
     all.tex.wall = malloc(sizeof(sfSprite *) * 1000);
@@ -693,6 +763,17 @@ all_t initialization(all_t all)
     all.re.wall = malloc(sizeof(sfIntRect) * 1000);
     all.hs = malloc(sizeof(char) * 1000);
     all.hs_file = malloc(sizeof(char) * 1000);
+    sfSprite_setTextureRect(all.tex.tp, all.re.tp);
+    return (all);
+}
+
+all_t initialization_music(all_t all)
+{
+    all.mu.title = sfMusic_createFromFile("files/title.ogg");
+    all.mu.play = sfMusic_createFromFile("files/play.ogg");
+    all.mu.win = sfMusic_createFromFile("files/win.ogg");
+    all.mu.tp = sfMusic_createFromFile("files/tp.ogg");
+    all.mu.jump = sfMusic_createFromFile("files/jump.ogg");
     return (all);
 }
 
@@ -781,6 +862,7 @@ void initialization_pos(all_t all)
     set_pos(all.tex.background, 0, 0);
     set_pos(all.tex.hud_win, 630, 0);
     set_pos(all.tex.hud_loose, 630, 0);
+    initialization_pos_text(all);
 }
 
 void initialization_pos_text(all_t all)
