@@ -6,6 +6,18 @@
 ##
 
 SRC     =       my_runner.c		\
+		aff_map.c		\
+		display.c		\
+		display2.c		\
+		initialization.c	\
+		initialization2.c	\
+		end.c			\
+		hit_box_score.c		\
+		lib_graphic.c		\
+		lib_graphic2.c		\
+		parallax.c		\
+		animation.c		\
+		option.c		\
 
 CPPFLAGS =	-I ./include
 
