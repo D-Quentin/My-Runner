@@ -29,9 +29,9 @@ all_t initialization_text(all_t all)
     all.tx.graphics = create_text(all.tx.graphics, 80, "Graphics settings :");
     all.tx.fps = create_text(all.tx.fps, 80, "FPS :");
     all.tx.score = create_text(all.tx.score, 80, "0");
-    all.tx.win = create_text(all.tx.win, 80,                            \
+    all.tx.win = create_text(all.tx.win, 80, \
                              "Game Over\n  You Win\n\nYour Score:");
-    all.tx.loose = create_text(all.tx.loose, 80,                        \
+    all.tx.loose = create_text(all.tx.loose, 80, \
                                "Game Over\n You Loose\n\nYour Score:");
     all.tx.hs = create_text(all.tx.hs, 80, "0");
     all.tx.hs_text = create_text(all.tx.hs_text, 80, "Highscore:");

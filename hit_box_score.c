@@ -12,11 +12,11 @@ all_t hit_box(all_t all)
     int i = 0;
 
     while (i != all.cn.spike) {
-        if (sfSprite_getPosition(all.tex.spike[i]).x < 600 &&   \
-            sfSprite_getPosition(all.tex.spike[i]).x > 380 &&   \
-            ((sfSprite_getPosition(all.tex.jump).y > 820 &&     \
-              sfSprite_getPosition(all.tex.jump).x == 500) ||   \
-             (sfSprite_getPosition(all.tex.run).y > 820 &&      \
+        if (sfSprite_getPosition(all.tex.spike[i]).x < 600 && \
+            sfSprite_getPosition(all.tex.spike[i]).x > 380 && \
+            ((sfSprite_getPosition(all.tex.jump).y > 820 && \
+              sfSprite_getPosition(all.tex.jump).x == 500) || \
+             (sfSprite_getPosition(all.tex.run).y > 820 && \
               sfSprite_getPosition(all.tex.run).x == 500))) {
             all.cn.play = 0;
             all.cn.end = 1;
@@ -25,6 +25,7 @@ all_t hit_box(all_t all)
         i++;
     }
     all = hit_box2(all);
+    all = hit_box3(all);
     return (all);
 }
 
@@ -33,25 +34,11 @@ all_t hit_box2(all_t all)
     int i = 0;
 
     while (i != all.cn.wall) {
-        if (sfSprite_getPosition(all.tex.wall[i]).x < 600 &&    \
-            sfSprite_getPosition(all.tex.wall[i]).x > 180 &&    \
-            ((sfSprite_getPosition(all.tex.jump).y > 820 &&     \
-              sfSprite_getPosition(all.tex.jump).x == 500) ||   \
-             (sfSprite_getPosition(all.tex.run).y > 820 &&      \
-              sfSprite_getPosition(all.tex.run).x == 500))) {
-            all.cn.play = 0;
-            all.cn.end = 1;
-            all.cn.loose = 1;
-        }
-        i++;
-    }
-    i = 0;
-    while (i != all.cn.hole) {
-        if (sfSprite_getPosition(all.tex.hole[i]).x < 600 &&    \
-            sfSprite_getPosition(all.tex.hole[i]).x > 360 &&    \
-            ((sfSprite_getPosition(all.tex.jump).y < 580 &&     \
-              sfSprite_getPosition(all.tex.jump).x == 500) ||   \
-             (sfSprite_getPosition(all.tex.run).y < 580 &&      \
+        if (sfSprite_getPosition(all.tex.wall[i]).x < 600 && \
+            sfSprite_getPosition(all.tex.wall[i]).x > 180 && \
+            ((sfSprite_getPosition(all.tex.jump).y > 820 && \
+              sfSprite_getPosition(all.tex.jump).x == 500) || \
+             (sfSprite_getPosition(all.tex.run).y > 820 && \
               sfSprite_getPosition(all.tex.run).x == 500))) {
             all.cn.play = 0;
             all.cn.end = 1;
@@ -61,7 +48,25 @@ all_t hit_box2(all_t all)
     }
     return (all);
 }
+all_t hit_box3(all_t all)
+{
+    int i = 0;
 
+    while (i != all.cn.hole) {
+        if (sfSprite_getPosition(all.tex.hole[i]).x < 600 && \
+            sfSprite_getPosition(all.tex.hole[i]).x > 360 && \
+            ((sfSprite_getPosition(all.tex.jump).y < 580 && \
+              sfSprite_getPosition(all.tex.jump).x == 500) || \
+             (sfSprite_getPosition(all.tex.run).y < 580 && \
+              sfSprite_getPosition(all.tex.run).x == 500))) {
+            all.cn.play = 0;
+            all.cn.end = 1;
+            all.cn.loose = 1;
+        }
+        i++;
+    }
+    return (all);
+}
 
 all_t highscore(all_t all)
 {

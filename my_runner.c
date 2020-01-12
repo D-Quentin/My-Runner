@@ -10,6 +10,7 @@
 int main(int ac, char **av)
 {
     all_t all;
+    
     if (syntax(ac, av) == 1)
         return (84);
     all = initialization(all);

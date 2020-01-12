@@ -74,7 +74,7 @@ void display_play(all_t all)
 void display_obj(all_t all)
 {
     int i = 0;
-
+    
     while (i != all.cn.spike) {
         sfRenderWindow_drawSprite(all.window, all.tex.spike[i], NULL);
         i++;

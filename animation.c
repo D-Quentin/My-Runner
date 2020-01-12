@@ -37,7 +37,7 @@ all_t jump2(all_t all)
 
     if (all.cn.jump >= 1) {
         set_pos(all.tex.run, 2000, 2000);
-        if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.jump))  \
+        if (sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.jump)) \
             > 150) {
             all.re.jump.left = all.re.jump.left + 125;
             sfSprite_setTextureRect(all.tex.jump, all.re.jump);
@@ -58,16 +58,16 @@ all_t gravity(all_t all)
     sfVector2f move = {0, 14};
     sfVector2f move_up = {0, -35};
 
-    if (all.cn.jump >= 1 && all.re.jump.left < 500 &&                   \
+    if (all.cn.jump >= 1 && all.re.jump.left < 500 && \
         sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.gravity)) > 20) {
         sfSprite_move(all.tex.jump, move_up);
     }
-    if (sfSprite_getPosition(all.tex.jump).y < 900 &&                   \
+    if (sfSprite_getPosition(all.tex.jump).y < 900 && \
         sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.gravity)) > 20) {
         sfSprite_move(all.tex.jump, move);
         sfClock_restart(all.cl.gravity);
     }
-    if (sfSprite_getPosition(all.tex.run).y < 900 &&                    \
+    if (sfSprite_getPosition(all.tex.run).y < 900 && \
         sfTime_asMilliseconds(sfClock_getElapsedTime(all.cl.gravity)) > 20) {
         sfSprite_move(all.tex.run, move);
         sfClock_restart(all.cl.gravity);

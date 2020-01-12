@@ -181,6 +181,7 @@ void display_obj(all_t all);
 all_t move_obj(all_t all);
 all_t hit_box(all_t all);
 all_t hit_box2(all_t all);
+all_t hit_box3(all_t all);
 all_t score(all_t all);
 all_t end(all_t all);
 all_t win(all_t all);

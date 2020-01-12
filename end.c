@@ -58,7 +58,6 @@ all_t button_end(all_t all)
         initialization_pos(all);
         all.cn.title = 1;
         all.cn.end = 0;
-        all.cn.pause = 0;
     }
     if (check_click(all.tex.play, 600, 150, all) == 1) {
         if (all.cn.pause != 1) {
@@ -92,7 +91,6 @@ all_t end_background(all_t all)
 all_t end(all_t all)
 {
     if (all.map[all.cn.map] == 'E') {
-        all.cl.tp = sfClock_create();
         set_pos(all.tex.tp, 500, 800);
         set_pos(all.tex.run, 2000, 2000);
         set_pos(all.tex.jump, 2000, 2000);

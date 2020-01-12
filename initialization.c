@@ -49,6 +49,7 @@ all_t initialization_clock(all_t all)
     all.cl.gravity = sfClock_create();
     all.cl.obj = sfClock_create();
     all.cl.score = sfClock_create();
+    all.cl.tp = sfClock_create();
     return (all);
 }
 

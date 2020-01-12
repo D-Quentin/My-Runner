@@ -29,14 +29,14 @@ all_t set_fps(all_t all)
 
 all_t set_window(all_t all)
 {
-    if (check_click(all.tex.fullscreen, 610, 100, all) == 1 &&  \
+    if (check_click(all.tex.fullscreen, 610, 100, all) == 1 && \
         all.cn.window != 1) {
         set_pos(all.tex.arrow, 10, 160);
         sfRenderWindow_destroy(all.window);
         all.window = set_win("My Runner", all.cn.fps, 1);
         all.cn.window = 1;
     }
-    else if (check_click(all.tex.windowed, 610, 100, all) == 1 &&       \
+    else if (check_click(all.tex.windowed, 610, 100, all) == 1 && \
              all.cn.window != 0) {
         set_pos(all.tex.arrow, 10, 270);
         sfRenderWindow_destroy(all.window);
@@ -79,7 +79,7 @@ all_t close_window(all_t all)
         all.cn.end = 0;
         all.cn.pause = 0;
     }
-    if (check_click(all.tex.quit, 340, 110, all) == 1 &&                \
+    if (check_click(all.tex.quit, 340, 110, all) == 1 && \
         all.cn.settings != 1 && (all.cn.play != 1 || all.cn.pause)) {
         sfRenderWindow_close(all.window);
         all.cn.title = 0;

@@ -10,13 +10,13 @@
 int check_click(sfSprite *sprite, int x, int y, all_t all)
 {
     if (sfMouse_isButtonPressed(sfMouseLeft) == sfTrue) {
-        if (sfMouse_getPositionRenderWindow(all.window).x >=    \
-            sfSprite_getPosition(sprite).x &&                   \
-            sfMouse_getPositionRenderWindow(all.window).x <=    \
-            sfSprite_getPosition(sprite).x + x &&               \
-            sfMouse_getPositionRenderWindow(all.window).y >=    \
-            sfSprite_getPosition(sprite).y &&                   \
-            sfMouse_getPositionRenderWindow(all.window).y <=    \
+        if (sfMouse_getPositionRenderWindow(all.window).x >= \
+            sfSprite_getPosition(sprite).x && \
+            sfMouse_getPositionRenderWindow(all.window).x <= \
+            sfSprite_getPosition(sprite).x + x && \
+            sfMouse_getPositionRenderWindow(all.window).y >= \
+            sfSprite_getPosition(sprite).y && \
+            sfMouse_getPositionRenderWindow(all.window).y <= \
             sfSprite_getPosition(sprite).y + y) {
             all.event.mouseButton.type = sfEvtMouseButtonReleased;
             return (1);
